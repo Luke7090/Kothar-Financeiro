@@ -861,8 +861,9 @@ def excluir_reaproveitamento(id):
     return redirect("/financeiro?aba=reaproveitamento")
 
 # ---------------- START ----------------
+with app.app_context():
+    db.create_all()
+
 if __name__ == "__main__":
     print(">>> INICIANDO SERVIDOR FLASK <<<")
-    with app.app_context():
-        db.create_all()
     app.run(debug=True, use_reloader=False)
