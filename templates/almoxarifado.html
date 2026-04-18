@@ -107,62 +107,69 @@
 <!-- ================= ABA MANUTENÇÃO ================= -->
 <div id="aba-manutencao" style="display:none;">
 
-<h3>Cadastro de item de manutenção</h3>
+    <h3>Cadastro de item de manutenção</h3>
 
-<form method="post">
-    <input type="hidden" name="aba" value="manutencao">
-    <input type="hidden" name="categoria" value="manutencao">
-    <input type="hidden" name="unidade" value="un">
+    <form method="post">
+        <input type="hidden" name="aba" value="manutencao">
+        <input type="hidden" name="categoria" value="manutencao">
+        <input type="hidden" name="unidade" value="un">
 
-    <label>Nome</label><br>
-    <input type="text" name="nome" required><br><br>
+        <label>Nome do item</label><br>
+        <input type="text" name="nome" required><br><br>
 
-    <label>Quantidade</label><br>
-    <input type="text" name="quantidade" required><br><br>
+        <label>Fabricante</label><br>
+        <input type="text" name="fabricante"><br><br>
 
-    <label>Custo unitário (R$)</label><br>
-    <input type="text" name="custo_unitario" required><br><br>
+        <label>Cor</label><br>
+        <input type="text" name="cor"><br><br>
 
-    <button type="submit">Adicionar item</button>
-</form>
+        <label>Quantidade</label><br>
+        <input type="text" name="quantidade" required><br><br>
 
-<hr>
+        <label>Custo unitário (R$)</label><br>
+        <input type="text" name="custo_unitario" required><br><br>
 
-<table>
-<tr>
-    <th>Item</th>
-    <th>Quantidade</th>
-    <th>Custo</th>
-    <th>Valor</th>
-    <th>Reposição</th>
-    <th>Ações</th>
-</tr>
+        <button type="submit">Adicionar item</button>
+    </form>
 
-{% for i in itens if i.categoria == 'manutencao' %}
-<tr>
-    <td>{{ i.nome }}</td>
-    <td>{{ i.quantidade }}</td>
-    <td>R$ {{ "%.2f"|format(i.custo_unitario) }}</td>
-    <td>R$ {{ "%.2f"|format(i.quantidade * i.custo_unitario) }}</td>
+    <hr>
 
-    <td>
-        <form method="post" action="/almoxarifado/repor-manutencao/{{ i.id }}">
-            <input type="hidden" name="aba" value="manutencao">
-            <input type="text" name="quantidade" placeholder="Qtd" required>
-            <input type="text" name="custo_unitario" placeholder="R$" required>
-            <button type="submit">Repor</button>
-        </form>
-    </td>
+    <h3>Itens de manutenção em estoque</h3>
 
-    <td>
-        <form method="post" action="/almoxarifado/deletar/{{ i.id }}">
-            <input type="hidden" name="aba" value="manutencao">
-            <button type="submit" style="color:red;">Excluir</button>
-        </form>
-    </td>
-</tr>
-{% endfor %}
-</table>
+    {% if itens %}
+    <table>
+        <tr>
+            <th>Item</th>
+            <th>Fabricante</th>
+            <th>Cor</th>
+            <th>Quantidade</th>
+            <th>Custo unitário</th>
+            <th>Ações</th>
+        </tr>
+
+        {% for i in itens if i.categoria == 'manutencao' %}
+        <tr>
+            <td>{{ i.nome }}</td>
+            <td>{{ i.fabricante }}</td>
+            <td>{{ i.cor }}</td>
+            <td>{{ "%.2f"|format(i.quantidade or 0) }}</td>
+            <td>R$ {{ "%.2f"|format(i.custo_unitario or 0) }}</td>
+            <td>
+                <form
+                    method="post"
+                    action="/almoxarifado/deletar/{{ i.id }}"
+                    onsubmit="return confirm('Tem certeza que deseja excluir este item?');"
+                >
+                    <input type="hidden" name="aba" value="manutencao">
+                    <button type="submit" style="color:red;">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Nenhum item de manutenção cadastrado ainda.</p>
+    {% endif %}
 
 </div>
 
@@ -176,7 +183,8 @@ function mostrarAba(aba) {
 }
 
 const params = new URLSearchParams(window.location.search);
-mostrarAba(params.get("aba") || "materiais");
+const abaAtiva = params.get("aba") || "materiais";
+mostrarAba(abaAtiva);
 </script>
 
 {% endblock %}

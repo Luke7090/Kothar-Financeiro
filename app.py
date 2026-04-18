@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for
 from collections import defaultdict
 from models import (
     db,
@@ -400,7 +400,7 @@ def financeiro():
         # ---------------- MATERIAIS BASE DO REAPROVEITAMENTO ----------------
     materiais_base = [
         i for i in itens_almoxarifado
-        if i.categoria == "material" and "Reaproveitado" not in (i.nome or "")
+        if i.categoria == "material" 
     ]
 
     catalogo_reaproveitamento = []
@@ -460,7 +460,7 @@ def financeiro():
 
     materiais_almox = [
         i for i in itens_almoxarifado
-        if i.categoria == "material" and "Reaproveitado" not in (i.nome or "")
+        if i.categoria == "material"
     ]
 
     itens_manutencao_almox = [
