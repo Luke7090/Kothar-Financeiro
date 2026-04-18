@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Financeiro</h2>
+
+<div style="margin-bottom:20px;">
+    <button onclick="mostrarAba('produzidos')">Produzidos</button>
+    <button onclick="mostrarAba('vendidos')">Vendidos</button>
+    <button onclick="mostrarAba('reaproveitamento')">Reaproveitamento</button>
+    <button onclick="mostrarAba('controle')">Controle financeiro</button>
+</div>
+
+<!-- ================= ABA PRODUZIDOS ================= -->
+<div id="aba-produzidos" style="display:none;">
+
+    <h3>Produzidos</h3>
+
+    {% if produzidos|length > 0 %}
+    <table>
+        <tr>
+            <th>Produto</th>
+            <th>Material</th>
+            <th>Cor</th>
+            <th>Quantidade</th>
+            <th>Peso unit. (g)</th>
+            <th>Tempo unit. (h)</th>
+            <th>Custo unit.</th>
+            <th>Valor em estoque</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
+
+        {% for p in produzidos %}
+        <tr>
+            <td>{{ p.nome }}</td>
+            <td>{{ p.material_nome }}</td>
+            <td>{{ p.material_cor }}</td>
+            <td>{{ p.quantidade }}</td>
+            <td>{{ "%.2f"|format(p.peso_unitario_g or 0) }}</td>
+            <td>{{ "%.2f"|format(p.tempo_unitario_horas or 0) }}</td>
+            <td>R$ {{ "%.2f"|format(p.custo_unitario or 0) }}</td>
+            <td><strong>R$ {{ "%.2f"|format(p.valor_total_estoque or 0) }}</strong></td>
+            <td>
+                {% if p.disponivel %}
+                    Disponível
+                {% else %}
+                    Indisponível
+                {% endif %}
+            </td>
+            <td>
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        {% if p.quantidade > 0 %}
+        <form method="post" action="/financeiro/produzidos/vender/{{ p.id }}">
+            <button type="submit">Vendido</button>
+        </form>
+
+        <form method="post" action="/financeiro/produzidos/reaproveitar/{{ p.id }}">
+            <button type="submit">Reaproveitar</button>
+        </form>
+        {% endif %}
+
+        <form method="post" action="/financeiro/produzidos/excluir/{{ p.id }}">
+            <button type="submit" style="color:red;">Excluir</button>
+        </form>
+    </div>
+</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Nenhum item produzido ainda.</p>
+    {% endif %}
+
+    <div id="popup-reaproveitar" style="display:none; position:fixed; top:20%; left:35%; background:#fff; border:1px solid #ccc; padding:20px; z-index:1000;">
+        <h3>Reaproveitar material</h3>
+
+        <form id="form-reaproveitar" method="post">
+            <label>Quantidade de material (g)</label><br>
+            <input type="text" name="quantidade_material" required><br><br>
+
+            <label>Cor</label><br>
+            <input type="text" name="material_cor" id="popup-material-cor" required><br><br>
+
+            <label>Fabricante</label><br>
+            <input type="text" name="material_fabricante" id="popup-material-fabricante" required><br><br>
+
+            <button type="submit">Confirmar</button>
+            <button type="button" onclick="fecharPopupReaproveitar()">Cancelar</button>
+        </form>
+    </div>
+
+</div>
+
+<!-- ================= ABA VENDIDOS ================= -->
+<div id="aba-vendidos" style="display:none;">
+
+    <h3>Vendidos</h3>
+
+    {% if vendidos|length > 0 %}
+    <table>
+        <tr>
+            <th>Produto</th>
+            <th>Material</th>
+            <th>Cor</th>
+            <th>Quantidade</th>
+            <th>Venda unit.</th>
+            <th>Venda total</th>
+            <th>Custo total</th>
+            <th>Lucro total</th>
+            <th>Ações</th>
+        </tr>
+
+        {% for v in vendidos %}
+        <tr>
+            <td>{{ v.nome }}</td>
+            <td>{{ v.material_nome }}</td>
+            <td>{{ v.material_cor }}</td>
+            <td>{{ v.quantidade }}</td>
+            <td>R$ {{ "%.2f"|format(v.valor_venda_unitario or 0) }}</td>
+            <td><strong>R$ {{ "%.2f"|format(v.valor_venda_total or 0) }}</strong></td>
+            <td>R$ {{ "%.2f"|format(v.custo_total or 0) }}</td>
+            <td>R$ {{ "%.2f"|format(v.lucro_total or 0) }}</td>
+            <td>
+                <form
+                    method="post"
+                    action="/financeiro/vendidos/excluir/{{ v.id }}"
+                    onsubmit="return confirm('⚠ Isso vai apagar TODO o registro de vendas deste produto. Deseja continuar?');"
+                >
+                    <button type="submit" style="color:#666; font-size:12px;" title="Excluir registro de teste">
+                        reset
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Nenhuma venda registrada ainda.</p>
+    {% endif %}
+
+</div>
+
+<!-- ================= ABA REAPROVEITAMENTO ================= -->
+<div id="aba-reaproveitamento" style="display:none;">
+
+    <h3>Reaproveitamento</h3>
+
+    <h4>Adicionar manualmente</h4>
+
+    <form method="post" action="/financeiro/reaproveitamento/adicionar" style="margin-bottom:20px;">
+        <label>Tipo</label><br>
+        <select name="categoria_item" id="tipo-reaproveitamento" onchange="alternarFormularioReaproveitamento()" required>
+            <option value="material">Material</option>
+            <option value="manutencao">Peça de reposição / item de manutenção</option>
+        </select><br><br>
+
+        <!-- FORM MATERIAL -->
+        <div id="form-reaproveitamento-material">
+            <label>Material catalogado</label><br>
+            <select name="material_id">
+                {% for m in materiais_almox %}
+                <option value="{{ m.id }}">
+                    {{ m.nome }} | {{ m.cor }} | {{ m.fabricante }}
+                </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Quantidade de material (g)</label><br>
+            <input type="text" name="quantidade_material"><br><br>
+
+            <label>Motivo</label><br>
+            <select name="motivo">
+                <option value="descarte">Descarte</option>
+                <option value="suporte">Suporte</option>
+                <option value="peca_rejeitada">Peça rejeitada</option>
+            </select><br><br>
+        </div>
+
+        <!-- FORM MANUTENÇÃO -->
+        <div id="form-reaproveitamento-manutencao" style="display:none;">
+            <label>Item de manutenção catalogado</label><br>
+            <select name="item_manutencao_id">
+                {% for i in itens_manutencao_almox %}
+                <option value="{{ i.id }}">
+                    {{ i.nome }} | {{ i.unidade }}
+                </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Quantidade</label><br>
+            <input type="text" name="quantidade_item"><br><br>
+
+            <label>Motivo</label><br>
+            <select name="motivo">
+                <option value="reposicao">Reposição</option>
+                <option value="manutencao">Manutenção</option>
+            </select><br><br>
+        </div>
+
+        <button type="submit">Adicionar</button>
+    </form>
+
+    <hr>
+
+    <h4>Materiais</h4>
+
+    {% if catalogo_reaproveitamento|length > 0 %}
+    <table>
+        <tr>
+            <th>Material</th>
+            <th>Cor</th>
+            <th>Fabricante</th>
+            <th>Peça rejeitada (g / R$)</th>
+            <th>Suporte (g / R$)</th>
+            <th>Descarte (g / R$)</th>
+            <th>Tempo gasto R$</th>
+            <th>Material gasto R$</th>
+            <th>Ação</th>
+        </tr>
+
+        {% for r in catalogo_reaproveitamento %}
+        <tr>
+            <td>{{ r.material_nome }}</td>
+            <td>{{ r.material_cor }}</td>
+            <td>{{ r.material_fabricante }}</td>
+
+            <td>
+                {{ "%.2f"|format(r.qtd_peca_rejeitada) }} g /
+                R$ {{ "%.2f"|format(r.valor_peca_rejeitada) }}
+            </td>
+
+            <td>
+                {{ "%.2f"|format(r.qtd_suporte) }} g /
+                R$ {{ "%.2f"|format(r.valor_suporte) }}
+            </td>
+
+            <td>
+                {{ "%.2f"|format(r.qtd_descarte) }} g /
+                R$ {{ "%.2f"|format(r.valor_descarte) }}
+            </td>
+
+            <td>R$ {{ "%.2f"|format(r.tempo_gasto_reais) }}</td>
+            <td><strong>R$ {{ "%.2f"|format(r.material_gasto_reais) }}</strong></td>
+
+            <td>
+                {% if r.qtd_total > 0 %}
+                <button
+                    type="button"
+                    onclick="abrirPopupReciclarAgrupado(
+                        '{{ r.material_nome }}',
+                        '{{ r.material_cor }}',
+                        '{{ r.material_fabricante }}',
+                        '{{ "%.2f"|format(r.qtd_total) }}',
+                        '{{ "%.4f"|format(r.valor_unitario) }}'
+                    )"
+                >
+                    Reciclar
+                </button>
+                {% else %}
+                -
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Nenhum material base encontrado no almoxarifado.</p>
+    {% endif %}
+
+    <hr>
+
+    <h4>Itens de manutenção</h4>
+
+    {% if reaproveitamento_manutencao|length > 0 %}
+    <table>
+        <tr>
+            <th>Item</th>
+            <th>Tipo do item (motivo)</th>
+            <th>Quantidade</th>
+            <th>Valor R$</th>
+            <th>Ação</th>
+        </tr>
+
+        {% for r in reaproveitamento_manutencao %}
+        <tr>
+            <td>{{ r.item_nome }}</td>
+            <td>{{ r.motivo }}</td>
+            <td>{{ "%.2f"|format(r.quantidade or 0) }} {{ r.unidade }}</td>
+            <td><strong>R$ {{ "%.2f"|format(r.valor_total or 0) }}</strong></td>
+            <td>
+                <form method="post" action="/financeiro/reaproveitamento/excluir/{{ r.id }}">
+                    <button type="submit" style="color:red;">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Nenhum item de manutenção no reaproveitamento.</p>
+    {% endif %}
+
+    <div id="popup-reciclar" style="display:none; position:fixed; top:20%; left:35%; background:#fff; border:1px solid #ccc; padding:20px; z-index:1000;">
+        <h3>Reciclar material</h3>
+
+        <form id="form-reciclar" method="post" action="/financeiro/reaproveitamento/reciclar-agrupado">
+            <input type="hidden" name="material_nome" id="popup-reciclar-material">
+            <input type="hidden" name="valor_unitario" id="popup-reciclar-valor-unitario">
+
+            <label>Quantidade de material (g)</label><br>
+            <input type="text" name="quantidade_material" id="popup-reciclar-quantidade" required><br><br>
+
+            <label>Cor</label><br>
+            <input type="text" name="material_cor" id="popup-reciclar-cor" required><br><br>
+
+            <label>Fabricante</label><br>
+            <input type="text" name="material_fabricante" id="popup-reciclar-fabricante" required><br><br>
+
+            <button type="submit">Confirmar</button>
+            <button type="button" onclick="fecharPopupReciclar()">Cancelar</button>
+        </form>
+    </div>
+
+</div>
+
+<!-- ================= ABA CONTROLE ================= -->
+<div id="aba-controle" style="display:none;">
+
+    <h3>Controle financeiro</h3>
+
+    <table>
+        <tr>
+            <th>Indicador</th>
+            <th>Valor</th>
+        </tr>
+        <tr>
+            <td>Valor total em materiais no almoxarifado</td>
+            <td><strong>R$ {{ "%.2f"|format(valor_almoxarifado_materiais or 0) }}</strong></td>
+        </tr>
+        <tr>
+            <td>Valor total em itens de manutenção no almoxarifado</td>
+            <td><strong>R$ {{ "%.2f"|format(valor_almoxarifado_manutencao or 0) }}</strong></td>
+        </tr>
+        <tr>
+            <td>Valor total no almoxarifado</td>
+            <td><strong>R$ {{ "%.2f"|format(valor_total_almoxarifado or 0) }}</strong></td>
+        </tr>
+        <tr>
+            <td>Valor parado em produzidos</td>
+            <td><strong>R$ {{ "%.2f"|format(valor_produzidos or 0) }}</strong></td>
+        </tr>
+        <tr>
+            <td>Faturamento total</td>
+            <td><strong>R$ {{ "%.2f"|format(faturamento_total or 0) }}</strong></td>
+        </tr>
+        <tr>
+            <td>Lucro total</td>
+            <td><strong>R$ {{ "%.2f"|format(lucro_total or 0) }}</strong></td>
+        </tr>
+        <tr>
+            <td>Valor parado em reaproveitamento</td>
+            <td><strong>R$ {{ "%.2f"|format(valor_reaproveitamento or 0) }}</strong></td>
+        </tr>
+    </table>
+
+</div>
+
+<script>
+function mostrarAba(aba) {
+    document.getElementById("aba-produzidos").style.display =
+        aba === "produzidos" ? "block" : "none";
+
+    document.getElementById("aba-vendidos").style.display =
+        aba === "vendidos" ? "block" : "none";
+
+    document.getElementById("aba-reaproveitamento").style.display =
+        aba === "reaproveitamento" ? "block" : "none";
+
+    document.getElementById("aba-controle").style.display =
+        aba === "controle" ? "block" : "none";
+}
+
+function alternarFormularioReaproveitamento() {
+    const tipo = document.getElementById("tipo-reaproveitamento").value;
+
+    document.getElementById("form-reaproveitamento-material").style.display =
+        tipo === "material" ? "block" : "none";
+
+    document.getElementById("form-reaproveitamento-manutencao").style.display =
+        tipo === "manutencao" ? "block" : "none";
+}
+
+function abrirPopupReciclarAgrupado(material, cor, fabricante, quantidade, valorUnitario) {
+    document.getElementById("popup-reciclar-material").value = material || "";
+    document.getElementById("popup-reciclar-cor").value = cor || "";
+    document.getElementById("popup-reciclar-fabricante").value = fabricante || "";
+    document.getElementById("popup-reciclar-quantidade").value = quantidade || "";
+    document.getElementById("popup-reciclar-valor-unitario").value = valorUnitario || "";
+    document.getElementById("popup-reciclar").style.display = "block";
+}
+
+function fecharPopupReciclar() {
+    document.getElementById("popup-reciclar").style.display = "none";
+}
+
+const params = new URLSearchParams(window.location.search);
+const abaAtiva = params.get("aba") || "produzidos";
+mostrarAba(abaAtiva);
+alternarFormularioReaproveitamento();
+</script>
+
+{% endblock %}

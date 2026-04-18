@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kothar Soluções</title>
+
+    <style>
+        :root {
+            --bg: #111827;
+            --panel: #111827;
+            --panel-2: #1f2937;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text);
+        }
+
+        .layout {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+        }
+
+        .sidebar {
+            background: rgba(15, 23, 42, 0.95);
+            color: rgb(241, 59, 4);
+            padding: 24px 18px;
+            border-right: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .brand {
+            margin-bottom: 28px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        .brand p {
+            margin: 6px 0 0;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .nav-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin: 18px 0 10px;
+        }
+
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sidebar nav a {
+            color: #e5e7eb;
+            text-decoration: none;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            transition: 0.2s ease;
+            font-size: 15px;
+        }
+
+        .sidebar nav a:hover {
+            background: rgba(37, 99, 235, 0.18);
+            color: white;
+            transform: translateX(2px);
+        }
+
+        .main {
+            padding: 28px;
+        }
+
+        .topbar {
+            background: rgba(255,255,255,0.96);
+            border-radius: 18px;
+            padding: 20px 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .topbar h2 {
+            margin: 0;
+            font-size: 26px;
+        }
+
+        .topbar p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .content-card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        h2, h3, h4 {
+            margin-top: 0;
+            color: #111827;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--line);
+            margin: 24px 0;
+        }
+
+        form {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: inline-block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            background: white;
+            font-size: 14px;
+            margin-bottom: 14px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            padding: 10px 16px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button[style*="color:red"] {
+            background: #fee2e2 !important;
+            color: #b91c1c !important;
+        }
+
+        button[style*="color:red"]:hover {
+            background: #fecaca !important;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+
+        th {
+            background: #e2e8f0;
+            color: #1e293b;
+            text-align: left;
+            padding: 14px 12px;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 12px;
+            border-top: 1px solid #e5e7eb;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .stat-card .label {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .tabs-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .tabs-row button {
+            background: #e2e8f0;
+            color: #1f2937;
+        }
+
+        .tabs-row button:hover {
+            background: #cbd5e1;
+        }
+
+        .inline-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .section-title {
+            margin-bottom: 12px;
+        }
+
+        .page-block {
+            background: white;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+
+            .main {
+                padding: 16px;
+            }
+
+            .topbar,
+            .content-card,
+            .page-block {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Kothar</h1>
+                <p>Gestão de Impressão 3D</p>
+            </div>
+
+            <div class="nav-title">Navegação</div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/equipamentos">Equipamentos</a>
+                <a href="/almoxarifado">Almoxarifado</a>
+                <a href="/produtos">Produtos</a>
+                <a href="/financeiro">Financeiro</a>
+            </nav>
+        </aside>
+
+        <main class="main">
+            <div class="topbar">
+                <h2>Painel Operacional</h2>
+                <p>Controle técnico, estoque, produção e financeiro em um só lugar.</p>
+            </div>
+
+            <div class="content-card">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

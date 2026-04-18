@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Almoxarifado</h2>
+
+<div style="margin-bottom:20px;">
+    <button onclick="mostrarAba('materiais')">Materiais</button>
+    <button onclick="mostrarAba('manutencao')">Itens de manutenção</button>
+</div>
+
+<!-- ================= ABA MATERIAIS ================= -->
+<div id="aba-materiais">
+
+<h3>Cadastro de material</h3>
+
+<form method="post">
+    <input type="hidden" name="aba" value="materiais">
+    <input type="hidden" name="categoria" value="material">
+    <input type="hidden" name="unidade" value="g">
+
+    <label>Material</label><br>
+    <input type="text" name="nome" required><br><br>
+
+    <label>Fabricante</label><br>
+    <input type="text" name="fabricante"><br><br>
+
+    <label>Cor</label><br>
+    <input type="text" name="cor"><br><br>
+
+    <label>Preço de compra (R$ / kg)</label><br>
+    <input type="text" name="custo_unitario" required><br><br>
+
+    <label>Quantidade em estoque (g)</label><br>
+    <input type="text" name="quantidade" required><br><br>
+
+    <button type="submit">Adicionar material</button>
+</form>
+
+<hr>
+
+<table>
+<tr>
+    <th>Material</th>
+    <th>Fabricante</th>
+    <th>Cor</th>
+    <th>Estoque (g)</th>
+    <th>Preço / kg</th>
+    <th>Reposição</th>
+    <th>Ações</th>
+</tr>
+
+{% for i in itens if i.categoria == 'material' %}
+<tr>
+    <td>{{ i.nome }}</td>
+    <td>{{ i.fabricante }}</td>
+    <td>{{ i.cor }}</td>
+
+    <td style="text-align:right;">
+        {{ "%.2f"|format(i.quantidade or 0) }}
+    </td>
+
+    <td style="text-align:right;">
+        R$ {{ "%.2f"|format(i.custo_unitario or 0) }}
+    </td>
+
+    <td>
+        <form
+            method="post"
+            action="/almoxarifado/repor/{{ i.id }}"
+            style="display:flex; gap:4px;"
+        >
+            <input type="hidden" name="aba" value="materiais">
+
+            <input
+                type="text"
+                name="quantidade"
+                placeholder="g"
+                style="width:60px;"
+                required
+            >
+
+            <input
+                type="text"
+                name="preco_compra"
+                placeholder="R$/kg"
+                style="width:80px;"
+                required
+            >
+
+            <button type="submit">Repor</button>
+        </form>
+    </td>
+
+    <td>
+        <form
+            method="post"
+            action="/almoxarifado/deletar/{{ i.id }}"
+            onsubmit="return confirm('Tem certeza que deseja excluir este material?');"
+        >
+            <input type="hidden" name="aba" value="materiais">
+            <button type="submit" style="color:red;">Excluir</button>
+        </form>
+    </td>
+</tr>
+{% endfor %}
+
+<!-- ================= ABA MANUTENÇÃO ================= -->
+<div id="aba-manutencao" style="display:none;">
+
+<h3>Cadastro de item de manutenção</h3>
+
+<form method="post">
+    <input type="hidden" name="aba" value="manutencao">
+    <input type="hidden" name="categoria" value="manutencao">
+    <input type="hidden" name="unidade" value="un">
+
+    <label>Nome</label><br>
+    <input type="text" name="nome" required><br><br>
+
+    <label>Quantidade</label><br>
+    <input type="text" name="quantidade" required><br><br>
+
+    <label>Custo unitário (R$)</label><br>
+    <input type="text" name="custo_unitario" required><br><br>
+
+    <button type="submit">Adicionar item</button>
+</form>
+
+<hr>
+
+<table>
+<tr>
+    <th>Item</th>
+    <th>Quantidade</th>
+    <th>Custo</th>
+    <th>Valor</th>
+    <th>Reposição</th>
+    <th>Ações</th>
+</tr>
+
+{% for i in itens if i.categoria == 'manutencao' %}
+<tr>
+    <td>{{ i.nome }}</td>
+    <td>{{ i.quantidade }}</td>
+    <td>R$ {{ "%.2f"|format(i.custo_unitario) }}</td>
+    <td>R$ {{ "%.2f"|format(i.quantidade * i.custo_unitario) }}</td>
+
+    <td>
+        <form method="post" action="/almoxarifado/repor-manutencao/{{ i.id }}">
+            <input type="hidden" name="aba" value="manutencao">
+            <input type="text" name="quantidade" placeholder="Qtd" required>
+            <input type="text" name="custo_unitario" placeholder="R$" required>
+            <button type="submit">Repor</button>
+        </form>
+    </td>
+
+    <td>
+        <form method="post" action="/almoxarifado/deletar/{{ i.id }}">
+            <input type="hidden" name="aba" value="manutencao">
+            <button type="submit" style="color:red;">Excluir</button>
+        </form>
+    </td>
+</tr>
+{% endfor %}
+</table>
+
+</div>
+
+<script>
+function mostrarAba(aba) {
+    document.getElementById("aba-materiais").style.display =
+        aba === "materiais" ? "block" : "none";
+
+    document.getElementById("aba-manutencao").style.display =
+        aba === "manutencao" ? "block" : "none";
+}
+
+const params = new URLSearchParams(window.location.search);
+mostrarAba(params.get("aba") || "materiais");
+</script>
+
+{% endblock %}

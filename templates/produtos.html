@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Precificação de Produtos</h2>
+
+<hr>
+
+<h3>Novo Produto</h3>
+
+<form method="post">
+
+    <table>
+        <tr>
+            <td>Nome:</td>
+            <td><input type="text" name="nome"></td>
+        </tr>
+
+        <tr>
+            <td>Máquina:</td>
+            <td>
+                <select name="equipamento_id">
+                    {% for e in equipamentos %}
+                        <option value="{{ e.id }}">{{ e.nome }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>Material:</td>
+            <td>
+                <select name="material_id">
+                    {% for m in materiais %}
+                        <option value="{{ m.id }}">
+                            {{ m.nome }} - {{m.fabricante}} - {{m.cor}}
+                        </option>
+
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>Tempo de Produção (h):</td>
+            <td><input type="text" name="tempo_producao"></td>
+        </tr>
+
+        <tr>
+            <td>Material Utilizado (g):</td>
+            <td><input type="text" name="quantidade_material"></td>
+        </tr>
+
+    </table>
+
+    <br>
+    <button type="submit">Calcular e Salvar</button>
+
+</form>
+
+<hr>
+
+<h3>Produtos Cadastrados</h3>
+
+<table>
+    <tr>
+        <th>Nome</th>
+        <th>Custo Produção</th>
+        <th>Preço Promocional</th>
+        <th>Preço Venda</th>
+        <th>Ações</th>
+    </tr>
+
+    {% for p in produtos %}
+    <tr>
+        <td>{{ p.nome }}</td>
+        <td>R$ {{ "%.2f"|format(p.custo_total or 0) }}</td>
+        <td>R$ {{ "%.2f"|format(p.preco_promocional or 0) }}</td>
+        <td>R$ {{ "%.2f"|format(p.preco_venda or 0) }}</td>
+        <td>
+            <form action="/produtos/deletar/{{ p.id }}" method="post">
+                <button type="submit">Excluir</button>
+            </form>
+        
+            <form action="/produtos/produzir/{{ p.id }}" method="post">
+                <button type="submit">Produzir</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+{% endblock %}

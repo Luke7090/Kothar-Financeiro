@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Catálogo Técnico de Máquinas</h2>
+
+<form method="post" style="max-width: 600px;">
+
+    <h3>Identificação</h3>
+
+    <div>
+        <label>Nome da máquina</label><br>
+        <input
+            type="text"
+            name="nome"
+            placeholder="Ex: Impressora Principal"
+            required
+        >
+    </div>
+
+    <br>
+
+    <div>
+        <label>Modelo da máquina</label><br>
+        <input
+            type="text"
+            name="modelo"
+            placeholder="Ex: Ender 3 V2"
+        >
+    </div>
+
+    <hr>
+
+    <h3>Energia e custo</h3>
+
+    <div>
+        <label>Potência nominal (W)</label><br>
+        <input
+            type="text"
+            name="potencia_w"
+            placeholder="Ex: 350"
+        >
+    </div>
+
+    <br>
+
+    <div>
+        <label>Manutenção por hora (R$)</label><br>
+        <input
+            type="text"
+            name="manutencao_hora"
+            placeholder="Ex: 1,50"
+        >
+    </div>
+
+    <hr>
+
+    <h3>Calibração mecânica</h3>
+
+    <div>
+        <label>Retração (mm)</label><br>
+        <input
+            type="text"
+            name="retracao"
+            placeholder="Ex: 0,8"
+        >
+    </div>
+
+    <hr>
+
+    <h3>Dinâmica / Ressonância</h3>
+
+    <div>
+        <label>Zona de VFA</label><br>
+        <input
+            type="text"
+            name="zona_vfa"
+            placeholder="Ex: 70 mm/s / 90 mm/s"
+        >
+    </div>
+
+    <br>
+
+    <div>
+        <label>VFA ideal</label><br>
+        <input
+            type="text"
+            name="vfa_ideal"
+            placeholder="Ex: 90 mm/s"
+        >
+    </div>
+
+    <br>
+
+    <div>
+        <label>Desvio de junção</label><br>
+        <input
+            type="text"
+            name="desvio_juncao"
+            placeholder="Ex: 0,02"
+        >
+    </div>
+
+    <hr>
+
+    <h3>Modelagem de Entrada</h3>
+
+    <div>
+        <label>FME</label><br>
+        <input
+            type="text"
+            name="fme"
+            placeholder="Ex: 39"
+        >
+    </div>
+
+    <br>
+
+    <div>
+        <label>FAME / Zeta</label><br>
+        <input
+            type="text"
+            name="fame"
+            placeholder="Ex: 0,15"
+        >
+    </div>
+
+    <br><br>
+
+    <button type="submit">Salvar Máquina</button>
+</form>
+
+<hr>
+
+<h3>Máquinas Cadastradas</h3>
+
+{% if equipamentos %}
+    {% for e in equipamentos %}
+        <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+            <p>
+                <strong>{{ e.nome }}</strong> ({{ e.modelo }})<br>
+                Potência: {{ e.potencia_w }} W |
+                Manutenção/h: R$ {{ e.manutencao_hora }}<br>
+                Retração: {{ e.retracao }} mm<br>
+                VFA ideal: {{ e.vfa_ideal }} |
+                FME: {{ e.fme }} |
+                FAME: {{ e.fame }}
+            </p>
+
+            <a href="/equipamentos/editar/{{ e.id }}">
+                <button type="button">Editar</button>
+            </a>
+
+            <form
+                method="post"
+                action="/equipamentos/deletar/{{ e.id }}"
+                onsubmit="return confirm('Tem certeza que deseja apagar este equipamento?');"
+            >
+                <button type="submit" style="color:red;">
+                    Excluir equipamento
+                </button>
+            </form>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>Nenhuma máquina cadastrada ainda.</p>
+{% endif %}
+
+{% endblock %}

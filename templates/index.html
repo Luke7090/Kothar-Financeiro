@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Configurações Gerais</h2>
+
+<form method="post" style="max-width: 500px;">
+
+    <label>Tarifa de energia (R$/kWh)</label><br>
+    <input
+        type="text"
+        name="tarifa_energia"
+        value="{{ tarifa_energia }}"
+        required
+    ><br><br>
+
+    <label>Margem promocional</label><br>
+    <input
+        type="text"
+        name="margem_promocional"
+        value="{{ margem_promocional }}"
+        required
+    ><br><br>
+
+    <label>Margem de venda</label><br>
+    <input
+        type="text"
+        name="margem_venda"
+        value="{{ margem_venda }}"
+        required
+    ><br><br>
+
+    <button type="submit">Salvar configurações</button>
+</form>
+
+<hr>
+
+<p><strong>Exemplo de lógica:</strong></p>
+<ul>
+    <li>Preço promocional = custo ÷ margem promocional</li>
+    <li>Preço de venda = custo ÷ margem de venda</li>
+</ul>
+
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Editar Equipamento</h2>
+
+<form method="post" style="max-width: 600px;">
+
+    <h3>Identificação</h3>
+
+    <input
+        type="text"
+        name="nome"
+        value="{{ equipamento.nome }}"
+        required
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        name="modelo"
+        value="{{ equipamento.modelo }}"
+    >
+
+    <hr>
+
+    <h3>Energia e custo</h3>
+
+    <input
+        type="text"
+        name="potencia_w"
+        value="{{ equipamento.potencia_w }}"
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        name="manutencao_hora"
+        value="{{ equipamento.manutencao_hora }}"
+    >
+
+    <hr>
+
+    <h3>Calibração mecânica</h3>
+
+    <input
+        type="text"
+        name="retracao"
+        value="{{ equipamento.retracao }}"
+    >
+
+    <hr>
+
+    <h3>Dinâmica</h3>
+
+    <input
+        type="text"
+        name="zona_vfa"
+        value="{{ equipamento.zona_vfa }}"
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        name="vfa_ideal"
+        value="{{ equipamento.vfa_ideal }}"
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        name="desvio_juncao"
+        value="{{ equipamento.desvio_juncao }}"
+    >
+
+    <hr>
+
+    <h3>Modelagem de Entrada</h3>
+
+    <input
+        type="text"
+        name="fme"
+        value="{{ equipamento.fme }}"
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        name="fame"
+        value="{{ equipamento.fame }}"
+    >
+
+    <br><br>
+
+    <button type="submit">Salvar Alterações</button>
+    <a href="/equipamentos">Cancelar</a>
+</form>
+
+{% endblock %}
