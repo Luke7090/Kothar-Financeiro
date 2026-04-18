@@ -639,21 +639,42 @@ def reaproveitar_produzido(id):
     return redirect("/financeiro?aba=reaproveitamento")
 
 # ---------------- Reaproveitamento Reciclar ----------------
-@app.route("/financeiro/reaproveitamento/reciclar/<int:id>", methods=["POST"])
-def reciclar_reaproveitamento(id):
-    reap = Reaproveitamento.query.get_or_404(id)
-
+@app.route("/financeiro/reaproveitamento/reciclar-agrupado", methods=["POST"])
+def reciclar_reaproveitamento_agrupado():
+    material_nome = (request.form.get("material_nome") or "").strip()
+    material_cor = (request.form.get("material_cor") or "").strip()
+    material_fabricante = (request.form.get("material_fabricante") or "").strip()
     quantidade_material = to_float(request.form.get("quantidade_material"))
-    material_cor = request.form.get("material_cor")
-    material_fabricante = request.form.get("material_fabricante")
+    valor_unitario = to_float(request.form.get("valor_unitario"))
 
-    if quantidade_material <= 0:
+    print("RECICLAR AGRUPADO:", {
+        "material_nome": material_nome,
+        "material_cor": material_cor,
+        "material_fabricante": material_fabricante,
+        "quantidade_material": quantidade_material,
+        "valor_unitario": valor_unitario
+    })
+
+    if not material_nome or quantidade_material <= 0:
         return redirect("/financeiro?aba=reaproveitamento")
 
-    if quantidade_material > reap.quantidade:
-        quantidade_material = reap.quantidade
+    registros = Reaproveitamento.query.filter_by(
+        categoria_item="material",
+        material_nome=material_nome,
+        material_cor=material_cor,
+        material_fabricante=material_fabricante,
+        unidade="g"
+    ).all()
 
-    nome_reaproveitado = f"{reap.material_nome} | ({material_cor}) Reaproveitado"
+    total_disponivel = sum((r.quantidade or 0) for r in registros)
+
+    if total_disponivel <= 0:
+        return redirect("/financeiro?aba=reaproveitamento")
+
+    if quantidade_material > total_disponivel:
+        quantidade_material = total_disponivel
+
+    nome_reaproveitado = f"{material_nome} | ({material_cor}) Reaproveitado"
 
     item_almox = ItemAlmoxarifado.query.filter_by(
         nome=nome_reaproveitado,
@@ -663,11 +684,10 @@ def reciclar_reaproveitamento(id):
         unidade="g"
     ).first()
 
-    custo_por_kg = (reap.valor_unitario or 0.0) * 1000
-    valor_total_reciclado = quantidade_material * (reap.valor_unitario or 0.0)
+    custo_por_kg = valor_unitario * 1000
 
     if item_almox:
-        item_almox.quantidade += quantidade_material
+        item_almox.quantidade = (item_almox.quantidade or 0) + quantidade_material
         item_almox.custo_unitario = custo_por_kg
     else:
         item_almox = ItemAlmoxarifado(
@@ -681,12 +701,21 @@ def reciclar_reaproveitamento(id):
         )
         db.session.add(item_almox)
 
-    # baixa do reaproveitamento
-    reap.quantidade -= quantidade_material
-    reap.valor_total -= valor_total_reciclado
+    restante = quantidade_material
 
-    if reap.quantidade <= 0:
-        db.session.delete(reap)
+    for r in registros:
+        if restante <= 0:
+            break
+
+        qtd_registro = r.quantidade or 0
+
+        if qtd_registro <= restante:
+            restante -= qtd_registro
+            db.session.delete(r)
+        else:
+            r.quantidade = qtd_registro - restante
+            r.valor_total = (r.quantidade or 0) * (r.valor_unitario or 0)
+            restante = 0
 
     db.session.commit()
     return redirect("/financeiro?aba=reaproveitamento")

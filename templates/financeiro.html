@@ -300,25 +300,25 @@
     {% endif %}
 
     <div id="popup-reciclar" style="display:none; position:fixed; top:20%; left:35%; background:#fff; border:1px solid #ccc; padding:20px; z-index:1000;">
-        <h3>Reciclar material</h3>
+    <h3>Reciclar material</h3>
 
-        <form id="form-reciclar" method="post" action="/financeiro/reaproveitamento/reciclar-agrupado">
-            <input type="hidden" name="material_nome" id="popup-reciclar-material">
-            <input type="hidden" name="valor_unitario" id="popup-reciclar-valor-unitario">
+    <form id="form-reciclar" method="post" action="/financeiro/reaproveitamento/reciclar-agrupado">
+        <input type="hidden" name="material_nome" id="popup-reciclar-material">
+        <input type="hidden" name="valor_unitario" id="popup-reciclar-valor-unitario">
 
-            <label>Quantidade de material (g)</label><br>
-            <input type="text" name="quantidade_material" id="popup-reciclar-quantidade" required><br><br>
+        <label>Quantidade de material (g)</label><br>
+        <input type="text" name="quantidade_material" id="popup-reciclar-quantidade" required><br><br>
 
-            <label>Cor</label><br>
-            <input type="text" name="material_cor" id="popup-reciclar-cor" required><br><br>
+        <label>Cor</label><br>
+        <input type="text" name="material_cor" id="popup-reciclar-cor" required><br><br>
 
-            <label>Fabricante</label><br>
-            <input type="text" name="material_fabricante" id="popup-reciclar-fabricante" required><br><br>
+        <label>Fabricante</label><br>
+        <input type="text" name="material_fabricante" id="popup-reciclar-fabricante" required><br><br>
 
-            <button type="submit">Confirmar</button>
-            <button type="button" onclick="fecharPopupReciclar()">Cancelar</button>
-        </form>
-    </div>
+        <button type="submit">Confirmar</button>
+        <button type="button" onclick="fecharPopupReciclar()">Cancelar</button>
+    </form>
+</div>
 
 </div>
 
@@ -401,6 +401,7 @@ function abrirPopupReciclarAgrupado(material, cor, fabricante, quantidade, valor
 function fecharPopupReciclar() {
     document.getElementById("popup-reciclar").style.display = "none";
 }
+
 
 const params = new URLSearchParams(window.location.search);
 const abaAtiva = params.get("aba") || "produzidos";
