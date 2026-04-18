@@ -195,28 +195,22 @@ def repor_material(id):
     quantidade_nova = to_float(request.form.get("quantidade"))
     preco_novo_kg = to_float(request.form.get("preco_compra"))
 
-    preco_novo_g = preco_novo_kg / 1000 if preco_novo_kg else 0
+    if quantidade_nova <= 0 or preco_novo_kg <= 0:
+        return redirect("/almoxarifado?aba=materiais")
 
-    quantidade_atual = item.quantidade or 0
-    preco_atual_g = item.preco_unitario or 0
+    quantidade_atual = item.quantidade or 0.0
+    preco_atual_kg = item.custo_unitario or 0.0
 
-    valor_atual = quantidade_atual * preco_atual_g
-    valor_novo = quantidade_nova * preco_novo_g
+    novo_preco_kg = (
+        (quantidade_atual * preco_atual_kg) +
+        (quantidade_nova * preco_novo_kg)
+    ) / (quantidade_atual + quantidade_nova)
 
-    quantidade_total = quantidade_atual + quantidade_nova
-
-    if quantidade_total > 0:
-        preco_medio_g = (valor_atual + valor_novo) / quantidade_total
-    else:
-        preco_medio_g = 0
-
-    item.quantidade = quantidade_total
-    item.preco_unitario = preco_medio_g
-    item.preco_kg = preco_medio_g * 1000
-    item.valor_total = item.quantidade * item.preco_unitario
+    item.quantidade = quantidade_atual + quantidade_nova
+    item.custo_unitario = novo_preco_kg
 
     db.session.commit()
-    return redirect(url_for("almoxarifado"))
+    return redirect("/almoxarifado?aba=materiais")
 
 # ---------------- REPOSIÇÃO MANUTENÇÃO ----------------
 @app.route("/almoxarifado/repor-manutencao/<int:id>", methods=["POST"])
@@ -483,7 +477,10 @@ def financeiro():
         faturamento_total=faturamento_total,
         lucro_total=lucro_total,
         valor_reaproveitamento=valor_reaproveitamento
+        materiais_almox=materiais_almox,
+        itens_manutencao_almox=itens_manutencao_almox,
     )
+
 
 # ---------------- PRODUZIDOS -> EXCLUIR ----------------
 @app.route("/financeiro/produzidos/excluir/<int:id>", methods=["POST"])
@@ -493,36 +490,41 @@ def excluir_produzido(id):
 
     if produzido.quantidade > 0:
         quantidade_total_g = produzido.quantidade * produzido.peso_unitario_g
-        valor_total = produzido.quantidade * produzido.custo_unitario
-        tempo_total = produzido.quantidade * produzido.tempo_unitario_horas
+
+        valor_material_g = 0.0
+        if produto.quantidade_material and produto.quantidade_material > 0:
+            valor_material_g = (produto.material_custo or 0.0) / produto.quantidade_material
+
+        valor_total_material = quantidade_total_g * valor_material_g
+        tempo_gasto_reais = (produto.energia or 0.0) * produzido.quantidade
 
         reap = Reaproveitamento.query.filter_by(
-            produto_id=produto.id,
+            categoria_item="material",
             material_nome=produto.material_nome,
+            material_cor=produto.material_cor,
+            material_fabricante=produto.material_fabricante,
             motivo="descarte",
             origem="produzidos",
             unidade="g"
         ).first()
 
-        valor_unitario_g = 0.0
-        if produzido.peso_unitario_g > 0:
-            valor_unitario_g = produzido.custo_unitario / produzido.peso_unitario_g
-
         if reap:
             reap.quantidade += quantidade_total_g
-            reap.valor_total += valor_total
-            reap.tempo_perdido_horas += tempo_total
+            reap.valor_total += valor_total_material
+            reap.tempo_gasto_reais += tempo_gasto_reais
         else:
             reap = Reaproveitamento(
                 produto_id=produto.id,
-                nome_referencia=produto.nome,
+                categoria_item="material",
                 material_nome=produto.material_nome,
+                material_cor=produto.material_cor,
+                material_fabricante=produto.material_fabricante,
                 unidade="g",
                 motivo="descarte",
                 quantidade=quantidade_total_g,
-                valor_unitario=valor_unitario_g,
-                valor_total=valor_total,
-                tempo_perdido_horas=tempo_total,
+                valor_unitario=valor_material_g,
+                valor_total=valor_total_material,
+                tempo_gasto_reais=tempo_gasto_reais,
                 origem="produzidos"
             )
             db.session.add(reap)
@@ -607,6 +609,7 @@ def reaproveitar_produzido(id):
     tempo_gasto_reais = produto.energia or 0.0
 
     reap = Reaproveitamento.query.filter_by(
+        categoria_item="material",
         material_nome=produto.material_nome,
         material_cor=produto.material_cor,
         material_fabricante=produto.material_fabricante,
@@ -620,8 +623,9 @@ def reaproveitar_produzido(id):
         reap.valor_total += valor_total_material
         reap.tempo_gasto_reais += tempo_gasto_reais
     else:
-        reap = Reaproveitamento(
+            reap = Reaproveitamento(
             produto_id=produto.id,
+            categoria_item="material",
             material_nome=produto.material_nome,
             material_cor=produto.material_cor,
             material_fabricante=produto.material_fabricante,
@@ -633,12 +637,13 @@ def reaproveitar_produzido(id):
             tempo_gasto_reais=tempo_gasto_reais,
             origem="produzidos"
         )
-        db.session.add(reap)
+    db.session.add(reap)
 
     db.session.commit()
     return redirect("/financeiro?aba=reaproveitamento")
 
-# ---------------- Reaproveitamento Reciclar ----------------
+
+# ---------------- reciclar ----------------
 @app.route("/financeiro/reaproveitamento/reciclar-agrupado", methods=["POST"])
 def reciclar_reaproveitamento_agrupado():
     material_nome = (request.form.get("material_nome") or "").strip()
@@ -714,78 +719,6 @@ def reciclar_reaproveitamento_agrupado():
             db.session.delete(r)
         else:
             r.quantidade = qtd_registro - restante
-            r.valor_total = (r.quantidade or 0) * (r.valor_unitario or 0)
-            restante = 0
-
-    db.session.commit()
-    return redirect("/financeiro?aba=reaproveitamento")
-
-# ---------------- reciclar ----------------
-@app.route("/financeiro/reaproveitamento/reciclar-agrupado", methods=["POST"])
-def reciclar_reaproveitamento_agrupado():
-    material_nome = request.form.get("material_nome")
-    material_cor = request.form.get("material_cor")
-    material_fabricante = request.form.get("material_fabricante")
-    quantidade_material = to_float(request.form.get("quantidade_material"))
-    valor_unitario = to_float(request.form.get("valor_unitario"))
-
-    if quantidade_material <= 0:
-        return redirect("/financeiro?aba=reaproveitamento")
-
-    registros = Reaproveitamento.query.filter_by(
-        categoria_item="material",
-        material_nome=material_nome,
-        material_cor=material_cor,
-        material_fabricante=material_fabricante,
-        unidade="g"
-    ).all()
-
-    total_disponivel = sum(r.quantidade or 0 for r in registros)
-    if total_disponivel <= 0:
-        return redirect("/financeiro?aba=reaproveitamento")
-
-    if quantidade_material > total_disponivel:
-        quantidade_material = total_disponivel
-
-    nome_reaproveitado = f"{material_nome} | ({material_cor}) Reaproveitado"
-
-    item_almox = ItemAlmoxarifado.query.filter_by(
-        nome=nome_reaproveitado,
-        fabricante=material_fabricante,
-        cor=material_cor,
-        categoria="material",
-        unidade="g"
-    ).first()
-
-    custo_por_kg = valor_unitario * 1000
-
-    if item_almox:
-        item_almox.quantidade += quantidade_material
-        item_almox.custo_unitario = custo_por_kg
-    else:
-        item_almox = ItemAlmoxarifado(
-            nome=nome_reaproveitado,
-            fabricante=material_fabricante,
-            cor=material_cor,
-            categoria="material",
-            unidade="g",
-            quantidade=quantidade_material,
-            custo_unitario=custo_por_kg
-        )
-        db.session.add(item_almox)
-
-    restante = quantidade_material
-
-    for r in registros:
-        if restante <= 0:
-            break
-
-        qtd_registro = r.quantidade or 0
-        if qtd_registro <= restante:
-            restante -= qtd_registro
-            db.session.delete(r)
-        else:
-            r.quantidade -= restante
             r.valor_total = (r.quantidade or 0) * (r.valor_unitario or 0)
             restante = 0
 
