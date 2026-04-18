@@ -85,11 +85,13 @@ def equipamentos():
             fme=to_float(request.form.get("fme")),
             fame=to_float(request.form.get("fame"))
         )
+
         db.session.add(equipamento)
         db.session.commit()
+
         return redirect("/equipamentos")
 
-    equipamentos = Equipamento.query.all()
+    equipamentos = Equipamento.query.order_by(Equipamento.id.desc()).all()
     return render_template("equipamentos.html", equipamentos=equipamentos)
 
 @app.route("/equipamentos/deletar/<int:id>", methods=["POST"])

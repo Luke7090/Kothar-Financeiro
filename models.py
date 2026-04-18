@@ -9,22 +9,17 @@ class Equipamento(db.Model):
     nome = db.Column(db.String(100), nullable=False)
     modelo = db.Column(db.String(100))
 
-    # Energia e custo
-    potencia_w = db.Column(db.Float)          # watts
-    manutencao_hora = db.Column(db.Float)     # R$/hora
+    potencia_w = db.Column(db.Float)
+    manutencao_hora = db.Column(db.Float)
 
-    # Calibração mecânica
     retracao = db.Column(db.Float)
 
-    # Dinâmica
     zona_vfa = db.Column(db.String(100))
     vfa_ideal = db.Column(db.Float)
     desvio_juncao = db.Column(db.Float)
 
-    # Modelagem de entrada
     fme = db.Column(db.Float)
     fame = db.Column(db.Float)
-
 
 class Material(db.Model):
     id = db.Column(db.Integer, primary_key=True)
