@@ -9,100 +9,107 @@
 </div>
 
 <!-- ================= ABA MATERIAIS ================= -->
-<div id="aba-materiais">
+<div id="aba-materiais" style="display:none;">
 
-<h3>Cadastro de material</h3>
+    <h3>Cadastro de material</h3>
 
-<form method="post">
-    <input type="hidden" name="aba" value="materiais">
-    <input type="hidden" name="categoria" value="material">
-    <input type="hidden" name="unidade" value="g">
+    <form method="post">
+        <input type="hidden" name="aba" value="materiais">
+        <input type="hidden" name="categoria" value="material">
+        <input type="hidden" name="unidade" value="g">
 
-    <label>Material</label><br>
-    <input type="text" name="nome" required><br><br>
+        <label>Material</label><br>
+        <input type="text" name="nome" required><br><br>
 
-    <label>Fabricante</label><br>
-    <input type="text" name="fabricante"><br><br>
+        <label>Fabricante</label><br>
+        <input type="text" name="fabricante"><br><br>
 
-    <label>Cor</label><br>
-    <input type="text" name="cor"><br><br>
+        <label>Cor</label><br>
+        <input type="text" name="cor"><br><br>
 
-    <label>Preço de compra (R$ / kg)</label><br>
-    <input type="text" name="custo_unitario" required><br><br>
+        <label>Preço de compra (R$ / kg)</label><br>
+        <input type="text" name="custo_unitario" required><br><br>
 
-    <label>Quantidade em estoque (g)</label><br>
-    <input type="text" name="quantidade" required><br><br>
+        <label>Quantidade em estoque (g)</label><br>
+        <input type="text" name="quantidade" required><br><br>
 
-    <button type="submit">Adicionar material</button>
-</form>
+        <button type="submit">Adicionar material</button>
+    </form>
 
-<hr>
+    <hr>
 
-<table>
-<tr>
-    <th>Material</th>
-    <th>Fabricante</th>
-    <th>Cor</th>
-    <th>Estoque (g)</th>
-    <th>Preço / kg</th>
-    <th>Reposição</th>
-    <th>Ações</th>
-</tr>
+    <h3>Materiais em estoque</h3>
 
-{% for i in itens if i.categoria == 'material' %}
-<tr>
-    <td>{{ i.nome }}</td>
-    <td>{{ i.fabricante }}</td>
-    <td>{{ i.cor }}</td>
+    {% set materiais_itens = itens | selectattr("categoria", "equalto", "material") | list %}
 
-    <td style="text-align:right;">
-        {{ "%.2f"|format(i.quantidade or 0) }}
-    </td>
+    {% if materiais_itens %}
+    <table>
+        <tr>
+            <th>Material</th>
+            <th>Fabricante</th>
+            <th>Cor</th>
+            <th>Estoque (g)</th>
+            <th>Preço / kg</th>
+            <th>Reposição</th>
+            <th>Ações</th>
+        </tr>
 
-    <td style="text-align:right;">
-        R$ {{ "%.2f"|format(i.custo_unitario or 0) }}
-    </td>
+        {% for i in materiais_itens %}
+        <tr>
+            <td>{{ i.nome }}</td>
+            <td>{{ i.fabricante }}</td>
+            <td>{{ i.cor }}</td>
+            <td style="text-align:right;">
+                {{ "%.2f"|format(i.quantidade or 0) }}
+            </td>
+            <td style="text-align:right;">
+                R$ {{ "%.2f"|format(i.custo_unitario or 0) }}
+            </td>
+            <td>
+                <form
+                    method="post"
+                    action="/almoxarifado/repor/{{ i.id }}"
+                    style="display:flex; gap:4px;"
+                >
+                    <input type="hidden" name="aba" value="materiais">
 
-    <td>
-        <form
-            method="post"
-            action="/almoxarifado/repor/{{ i.id }}"
-            style="display:flex; gap:4px;"
-        >
-            <input type="hidden" name="aba" value="materiais">
+                    <input
+                        type="text"
+                        name="quantidade"
+                        placeholder="g"
+                        style="width:60px;"
+                        required
+                    >
 
-            <input
-                type="text"
-                name="quantidade"
-                placeholder="g"
-                style="width:60px;"
-                required
-            >
+                    <input
+                        type="text"
+                        name="preco_compra"
+                        placeholder="R$/kg"
+                        style="width:80px;"
+                        required
+                    >
 
-            <input
-                type="text"
-                name="preco_compra"
-                placeholder="R$/kg"
-                style="width:80px;"
-                required
-            >
+                    <button type="submit">Repor</button>
+                </form>
+            </td>
+            <td>
+                <form
+                    method="post"
+                    action="/almoxarifado/deletar/{{ i.id }}"
+                    onsubmit="return confirm('Tem certeza que deseja excluir este material?');"
+                >
+                    <input type="hidden" name="aba" value="materiais">
+                    <button type="submit" style="color:red;">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Nenhum material cadastrado ainda.</p>
+    {% endif %}
 
-            <button type="submit">Repor</button>
-        </form>
-    </td>
-
-    <td>
-        <form
-            method="post"
-            action="/almoxarifado/deletar/{{ i.id }}"
-            onsubmit="return confirm('Tem certeza que deseja excluir este material?');"
-        >
-            <input type="hidden" name="aba" value="materiais">
-            <button type="submit" style="color:red;">Excluir</button>
-        </form>
-    </td>
-</tr>
-{% endfor %}
+</div>
 
 <!-- ================= ABA MANUTENÇÃO ================= -->
 <div id="aba-manutencao" style="display:none;">
@@ -162,17 +169,11 @@
                     action="/almoxarifado/deletar/{{ i.id }}"
                     onsubmit="return confirm('Tem certeza que deseja excluir este item?');"
                 >
+                    <input type="hidden" name="aba" value="manutencao">
                     <button type="submit" style="color:red;">Excluir</button>
                 </form>
             </td>
         </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p>Nenhum item de manutenção cadastrado ainda.</p>
-    {% endif %}
-
-</div>
         {% endfor %}
     </table>
     {% else %}
