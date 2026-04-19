@@ -476,7 +476,7 @@ def financeiro():
         valor_produzidos=valor_produzidos,
         faturamento_total=faturamento_total,
         lucro_total=lucro_total,
-        valor_reaproveitamento=valor_reaproveitamento
+        valor_reaproveitamento=valor_reaproveitamento,
         materiais_almox=materiais_almox,
         itens_manutencao_almox=itens_manutencao_almox,
     )
