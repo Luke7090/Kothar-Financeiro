@@ -136,7 +136,9 @@
 
     <h3>Itens de manutenção em estoque</h3>
 
-    {% if itens %}
+    {% set manutencao_itens = itens | selectattr("categoria", "equalto", "manutencao") | list %}
+
+    {% if manutencao_itens %}
     <table>
         <tr>
             <th>Item</th>
@@ -147,7 +149,7 @@
             <th>Ações</th>
         </tr>
 
-        {% for i in itens if i.categoria == 'manutencao' %}
+        {% for i in manutencao_itens %}
         <tr>
             <td>{{ i.nome }}</td>
             <td>{{ i.fabricante }}</td>
@@ -160,11 +162,17 @@
                     action="/almoxarifado/deletar/{{ i.id }}"
                     onsubmit="return confirm('Tem certeza que deseja excluir este item?');"
                 >
-                    <input type="hidden" name="aba" value="manutencao">
                     <button type="submit" style="color:red;">Excluir</button>
                 </form>
             </td>
         </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Nenhum item de manutenção cadastrado ainda.</p>
+    {% endif %}
+
+</div>
         {% endfor %}
     </table>
     {% else %}

@@ -261,49 +261,61 @@ def produtos():
     margem_promocional = config.margem_promocional if config.margem_promocional > 0 else 0.6
     margem_venda = config.margem_venda if config.margem_venda > 0 else 0.5
 
+    erro = None
+
     if request.method == "POST":
         nome = request.form.get("nome")
         equipamento_id = to_int(request.form.get("equipamento_id"))
         material_id = to_int(request.form.get("material_id"))
-        tempo_producao = to_float(request.form.get("tempo_producao"))  # em minutos
+        tempo_producao = to_float(request.form.get("tempo_producao"))  # minutos
         quantidade_material = to_float(request.form.get("quantidade_material"))
 
         equipamento = Equipamento.query.get(equipamento_id)
         material = ItemAlmoxarifado.query.get(material_id)
 
-        tarifa_energia = config.tarifa_energia if config.tarifa_energia > 0 else 0.0
+        if not nome:
+            erro = "Informe o nome do produto."
+        elif not equipamento:
+            erro = "Selecione um equipamento válido."
+        elif not material:
+            erro = "Selecione um material válido."
+        elif tempo_producao <= 0:
+            erro = "Informe um tempo de produção maior que zero."
+        elif quantidade_material <= 0:
+            erro = "Informe uma quantidade de material maior que zero."
+        else:
+            tarifa_energia = config.tarifa_energia if config.tarifa_energia > 0 else 0.0
 
-        # converte minutos para horas
-        tempo_horas = tempo_producao / 60
+            tempo_horas = tempo_producao / 60
 
-        energia = ((equipamento.potencia_w or 0) / 1000) * tempo_horas * tarifa_energia
-        material_custo = quantidade_material * ((material.custo_unitario or 0) / 1000)
-        custo_manutencao = tempo_horas * (equipamento.manutencao_hora or 0)
+            energia = ((equipamento.potencia_w or 0) / 1000) * tempo_horas * tarifa_energia
+            material_custo = quantidade_material * ((material.custo_unitario or 0) / 1000)
+            custo_manutencao = tempo_horas * (equipamento.manutencao_hora or 0)
 
-        custo_total = energia + material_custo + custo_manutencao
+            custo_total = energia + material_custo + custo_manutencao
 
-        preco_promocional = custo_total / margem_promocional
-        preco_venda = custo_total / margem_venda
+            preco_promocional = custo_total / margem_promocional
+            preco_venda = custo_total / margem_venda
 
-        produto = Produto(
-            nome=nome,
-            equipamento_id=equipamento_id,
-            material_id=material_id,
-            tempo_producao=tempo_producao,
-            quantidade_material=quantidade_material,
-            energia=energia,
-            material_custo=material_custo,
-            custo_total=custo_total,
-            preco_promocional=preco_promocional,
-            preco_venda=preco_venda,
-            material_nome=material.nome,
-            material_fabricante=material.fabricante,
-            material_cor=material.cor
-        )
+            produto = Produto(
+                nome=nome,
+                equipamento_id=equipamento_id,
+                material_id=material_id,
+                tempo_producao=tempo_producao,
+                quantidade_material=quantidade_material,
+                energia=energia,
+                material_custo=material_custo,
+                custo_total=custo_total,
+                preco_promocional=preco_promocional,
+                preco_venda=preco_venda,
+                material_nome=material.nome,
+                material_fabricante=material.fabricante,
+                material_cor=material.cor
+            )
 
-        db.session.add(produto)
-        db.session.commit()
-        return redirect("/produtos")
+            db.session.add(produto)
+            db.session.commit()
+            return redirect("/produtos")
 
     return render_template(
         "produtos.html",
@@ -311,16 +323,9 @@ def produtos():
         equipamentos=equipamentos,
         materiais=materiais,
         margem_promocional=margem_promocional,
-        margem_venda=margem_venda
+        margem_venda=margem_venda,
+        erro=erro
     )
-
-
-@app.route("/produtos/deletar/<int:id>", methods=["POST"])
-def deletar_produto(id):
-    produto = Produto.query.get_or_404(id)
-    db.session.delete(produto)
-    db.session.commit()
-    return redirect("/produtos")
 
 # ---------------- Produzir Produto ----------------
 @app.route("/produtos/produzir/<int:id>", methods=["POST"])

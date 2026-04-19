@@ -6,7 +6,11 @@
 <hr>
 
 <h3>Novo Produto</h3>
-
+{% if erro %}
+    <div style="background:#fee2e2; color:#991b1b; padding:12px; border-radius:10px; margin-bottom:16px;">
+        {{ erro }}
+    </div>
+{% endif %}
 <form method="post">
 
     <table>
