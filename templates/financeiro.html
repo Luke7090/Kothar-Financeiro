@@ -244,18 +244,18 @@
 
             <td>
                 {% if r.qtd_total > 0 %}
-                <button
-                    type="button"
-                    onclick="abrirPopupReciclarAgrupado(
-                        '{{ r.material_nome }}',
-                        '{{ r.material_cor }}',
-                        '{{ r.material_fabricante }}',
-                        "{{ "%.2f"|format(r.qtd_total) }}",
-                        "{{ "%.4f"|format(r.valor_unitario) }}",
-                    )"
-                >
-                    Reciclar
-                </button>
+               <button
+                type="button"
+                onclick="abrirPopupReciclarAgrupado(
+                    '{{ r.material_nome }}',
+                    '{{ r.material_cor }}',
+                    '{{ r.material_fabricante }}',
+                    '{{ "%.2f"|format(r.qtd_total) }}',
+                    '{{ "%.4f"|format(r.valor_unitario) }}'
+            )"
+        >
+            Reciclar
+        </button>
                 {% else %}
                 -
                 {% endif %}
@@ -318,8 +318,6 @@
         <button type="submit">Confirmar</button>
         <button type="button" onclick="fecharPopupReciclar()">Cancelar</button>
     </form>
-</div>
-
 </div>
 
 <!-- ================= ABA CONTROLE ================= -->
@@ -401,8 +399,6 @@ function abrirPopupReciclarAgrupado(material, cor, fabricante, quantidade, valor
 function fecharPopupReciclar() {
     document.getElementById("popup-reciclar").style.display = "none";
 }
-
-
 
 const params = new URLSearchParams(window.location.search);
 const abaAtiva = params.get("aba") || "produzidos";

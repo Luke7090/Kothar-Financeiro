@@ -657,14 +657,6 @@ def reciclar_reaproveitamento_agrupado():
     quantidade_material = to_float(request.form.get("quantidade_material"))
     valor_unitario = to_float(request.form.get("valor_unitario"))
 
-    print("RECICLAR AGRUPADO:", {
-        "material_nome": material_nome,
-        "material_cor": material_cor,
-        "material_fabricante": material_fabricante,
-        "quantidade_material": quantidade_material,
-        "valor_unitario": valor_unitario
-    })
-
     if not material_nome or quantidade_material <= 0:
         return redirect("/financeiro?aba=reaproveitamento")
 
